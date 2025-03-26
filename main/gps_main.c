@@ -26,6 +26,7 @@ static const char *TAG = "example";
 static uint8_t s_led_state = 0;
 static uint16_t s_led_period = 1000;
 
+static uint16_t s_wait_time = 1000 / portTICK_PERIOD_MS;
 const gpio_num_t LED_CLK = CONFIG_TM1637_CLK_PIN;
 const gpio_num_t LED_DTA = CONFIG_TM1637_DIO_PIN;
 
@@ -35,19 +36,19 @@ void tm1637_task(void *arg)
     if (led == NULL)
         vTaskDelete(NULL);
 
-    // #if 0
-    //     tm1637_set_brightness(led, 7);
-    //     while (true)
-    //     {
-    //         tm1637_set_segment_fixed(led, led->segment_idx[0], 0xFF);
-    //         tm1637_set_segment_fixed(led, led->segment_idx[1], 0xFF);
-    //         tm1637_set_segment_fixed(led, led->segment_idx[2], 0xFF);
-    //         tm1637_set_segment_fixed(led, led->segment_idx[3], 0xFF);
-    //         tm1637_set_segment_fixed(led, led->segment_idx[4], 0xFF);
-    //         tm1637_set_segment_fixed(led, led->segment_idx[5], 0xFF);
-    //         vTaskDelay(s_led_period / portTICK_PERIOD_MS);
-    //     }
-    // #endif
+    #if 0
+        tm1637_set_brightness(led, 7);
+        while (true)
+        {
+            tm1637_set_segment_fixed(led, led->segment_idx[0], 0xFF);
+            tm1637_set_segment_fixed(led, led->segment_idx[1], 0xFF);
+            tm1637_set_segment_fixed(led, led->segment_idx[2], 0xFF);
+            tm1637_set_segment_fixed(led, led->segment_idx[3], 0xFF);
+            tm1637_set_segment_fixed(led, led->segment_idx[4], 0xFF);
+            tm1637_set_segment_fixed(led, led->segment_idx[5], 0xFF);
+            vTaskDelay(s_wait_time);
+        }
+    #endif
 
     while (true)
     {
@@ -63,12 +64,12 @@ void tm1637_task(void *arg)
             tm1637_set_segment_fixed(led, led->segment_idx[3], v_seg_data);
             tm1637_set_segment_fixed(led, led->segment_idx[4], v_seg_data);
             tm1637_set_segment_fixed(led, led->segment_idx[5], v_seg_data);
-            vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+            vTaskDelay(s_wait_time);
         }
 
         // Test brightness
         ESP_LOGI(TAG, "Test brightness");
-        for (int x = 0; x < 7; x++)
+        for (int x = 0; x < 1; x++)
         {
             tm1637_set_brightness(led, x);
             tm1637_set_segment_fixed(led, led->segment_idx[0], 0xFF);
@@ -77,51 +78,62 @@ void tm1637_task(void *arg)
             tm1637_set_segment_fixed(led, led->segment_idx[3], 0xFF);
             tm1637_set_segment_fixed(led, led->segment_idx[4], 0xFF);
             tm1637_set_segment_fixed(led, led->segment_idx[5], 0xFF);
-            vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+            vTaskDelay(s_wait_time);
         }
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
 
         // Test display integer number
         ESP_LOGI(TAG, "Test display integer number");
         tm1637_set_number(led, 1, true, 0x00); // 0001
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, 12, true, 0x00); // 0012
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, 123, true, 0x00); // 0123
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, 1234, true, 0x00); // 1234
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
 
         tm1637_set_number(led, 1, false, 0x00); // ____1
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, 12, false, 0x00); // ____12
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, 123, false, 0x00); // ___123
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, 1234, false, 0x00); // __1234
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
 
         tm1637_set_number(led, -1, true, 0x00); // -001
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, -12, true, 0x00); // -012
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, -123, true, 0x00); // -123
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
 
         tm1637_set_number(led, -1, false, 0x00); // ____-1
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, -12, false, 0x00); // ___-12
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         tm1637_set_number(led, -123, false, 0x00); // __-123
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
+
+        // Test display text
+        ESP_LOGI(TAG, "Test display text");
+		tm1637_set_segment_ascii(led, "PLAY");
+		vTaskDelay(s_wait_time);
+		tm1637_set_segment_ascii(led, "1234567890");
+		vTaskDelay(s_wait_time);
+		tm1637_set_segment_ascii(led, "IP 192.168.10.20");
+		vTaskDelay(s_wait_time);
+		tm1637_set_segment_ascii(led, "STOP");
+		vTaskDelay(s_wait_time);
 
         // Test clock segment
         ESP_LOGI(TAG, "Test clock segment 1");
         tm1637_set_segment_ascii_with_time(led, "1234", 0x40, 1000);
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
         ESP_LOGI(TAG, "Test clock segment 2");
         tm1637_set_segment_ascii_with_time(led, "1234", 0x00, 1000);
-        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
+        vTaskDelay(s_wait_time);
     } // end while
 }
 

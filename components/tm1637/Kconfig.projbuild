@@ -44,7 +44,7 @@ menu "TM1637 Configuration"
 
 	choice TM1637_SEGMENT_TYPE
 		prompt "Segment Type"
-		default TM1637_DOT_SEGMENT
+		default TM1637_CLOCK_SEGMENT
 		help
 			Select Interface.
 		config TM1637_DOT_SEGMENT
