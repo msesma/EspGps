@@ -14,7 +14,7 @@
 #include "esp_log.h"
 #include "led_strip.h"
 #include "sdkconfig.h"
-
+#include "nmea_parser.h"
 #include "tm1637.h"
 #include <time.h>
 #include <sys/time.h>
@@ -22,6 +22,8 @@
 static const char *TAG = "example";
 
 #define BLINK_GPIO 8
+#define TIME_ZONE (+1)   //Europe Time
+#define YEAR_BASE (2000) //date in GPS starts from 2000
 
 static uint8_t s_led_state = 0;
 static uint16_t s_led_period = 1000;
@@ -29,6 +31,49 @@ static uint16_t s_led_period = 1000;
 static uint16_t s_wait_time = 1000 / portTICK_PERIOD_MS;
 const gpio_num_t LED_CLK = CONFIG_TM1637_CLK_PIN;
 const gpio_num_t LED_DTA = CONFIG_TM1637_DIO_PIN;
+
+const uart_port_t uart_num = UART_NUM_0;
+uart_config_t uart_config = {
+    .baud_rate = 9600,
+    .data_bits = UART_DATA_8_BITS,
+    .parity = UART_PARITY_DISABLE,
+    .stop_bits = UART_STOP_BITS_1,
+    .flow_ctrl = UART_HW_FLOWCTRL_CTS_RTS,
+    .rx_flow_ctrl_thresh = 122,
+};
+
+/**
+ * @brief GPS Event Handler
+ *
+ * @param event_handler_arg handler specific arguments
+ * @param event_base event base, here is fixed to ESP_NMEA_EVENT
+ * @param event_id event id
+ * @param event_data event specific arguments
+ */
+static void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+{
+    gps_t *gps = NULL;
+    switch (event_id) {
+    case GPS_UPDATE:
+        gps = (gps_t *)event_data;
+        /* print information parsed from GPS statements */
+        ESP_LOGI(TAG, "%d/%d/%d %d:%d:%d => \r\n"
+                 "\t\t\t\t\t\tlatitude   = %.05f°N\r\n"
+                 "\t\t\t\t\t\tlongitude = %.05f°E\r\n"
+                 "\t\t\t\t\t\taltitude   = %.02fm\r\n"
+                 "\t\t\t\t\t\tspeed      = %fm/s",
+                 gps->date.year + YEAR_BASE, gps->date.month, gps->date.day,
+                 gps->tim.hour + TIME_ZONE, gps->tim.minute, gps->tim.second,
+                 gps->latitude, gps->longitude, gps->altitude, gps->speed);
+        break;
+    case GPS_UNKNOWN:
+        /* print unknown statements */
+        ESP_LOGW(TAG, "Unknown statement:%s", (char *)event_data);
+        break;
+    default:
+        break;
+    }
+}
 
 void tm1637_task(void *arg)
 {
@@ -160,8 +205,23 @@ void led_task(void *arg)
 void app_main(void)
 {
 
+
     ESP_LOGI(TAG, "GPS LOG");
 
     xTaskCreate(&tm1637_task, "tm1637_task", 1024 * 4, NULL, 5, NULL);
     xTaskCreate(&led_task, "led_task", 1024 * 2, NULL, 5, NULL);
+
+        /* NMEA parser configuration */
+        nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
+        /* init NMEA parser library */
+        nmea_parser_handle_t nmea_hdl = nmea_parser_init(&config);
+        /* register event handler for NMEA parser library */
+        nmea_parser_add_handler(nmea_hdl, gps_event_handler, NULL);
+    
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+    
+        /* unregister event handler */
+        nmea_parser_remove_handler(nmea_hdl, gps_event_handler);
+        /* deinit NMEA parser library */
+        nmea_parser_deinit(nmea_hdl);
 }

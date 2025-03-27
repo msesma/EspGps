@@ -1,5 +1,5 @@
 dependencies:
   espressif/led_strip: "^2.4.1"
-  # petrows/esp-32-tm1637: "^1.0.0"
+  # igrr/libnmea-esp32: "^4.2"
   # nopnop2002/esp-idf-tm1637: "^1.0.0"
 
