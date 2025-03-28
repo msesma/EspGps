@@ -19,11 +19,11 @@
 #include <time.h>
 #include <sys/time.h>
 
-static const char *TAG = "example";
+static const char *TAG = "EspGps";
 
 #define BLINK_GPIO 8
-#define TIME_ZONE (+1)   //Europe Time
-#define YEAR_BASE (2000) //date in GPS starts from 2000
+#define TIME_ZONE (+1)   // Europe Time
+#define YEAR_BASE (2000) // date in GPS starts from 2000
 
 static uint8_t s_led_state = 0;
 static uint16_t s_led_period = 1000;
@@ -32,15 +32,15 @@ static uint16_t s_wait_time = 1000 / portTICK_PERIOD_MS;
 const gpio_num_t LED_CLK = CONFIG_TM1637_CLK_PIN;
 const gpio_num_t LED_DTA = CONFIG_TM1637_DIO_PIN;
 
-const uart_port_t uart_num = UART_NUM_0;
-uart_config_t uart_config = {
-    .baud_rate = 9600,
-    .data_bits = UART_DATA_8_BITS,
-    .parity = UART_PARITY_DISABLE,
-    .stop_bits = UART_STOP_BITS_1,
-    .flow_ctrl = UART_HW_FLOWCTRL_CTS_RTS,
-    .rx_flow_ctrl_thresh = 122,
-};
+// const uart_port_t uart_num = UART_NUM_0;
+// uart_config_t uart_config = {
+//     .baud_rate = 9600,
+//     .data_bits = UART_DATA_8_BITS,
+//     .parity = UART_PARITY_DISABLE,
+//     .stop_bits = UART_STOP_BITS_1,
+//     .flow_ctrl = UART_HW_FLOWCTRL_CTS_RTS,
+//     .rx_flow_ctrl_thresh = 122,
+// };
 
 /**
  * @brief GPS Event Handler
@@ -53,15 +53,16 @@ uart_config_t uart_config = {
 static void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     gps_t *gps = NULL;
-    switch (event_id) {
+    switch (event_id)
+    {
     case GPS_UPDATE:
         gps = (gps_t *)event_data;
         /* print information parsed from GPS statements */
         ESP_LOGI(TAG, "%d/%d/%d %d:%d:%d => \r\n"
-                 "\t\t\t\t\t\tlatitude   = %.05f°N\r\n"
-                 "\t\t\t\t\t\tlongitude = %.05f°E\r\n"
-                 "\t\t\t\t\t\taltitude   = %.02fm\r\n"
-                 "\t\t\t\t\t\tspeed      = %fm/s",
+                      "\t\t\t\t\t\tlatitude   = %.05f°N\r\n"
+                      "\t\t\t\t\t\tlongitude = %.05f°E\r\n"
+                      "\t\t\t\t\t\taltitude   = %.02fm\r\n"
+                      "\t\t\t\t\t\tspeed      = %fm/s",
                  gps->date.year + YEAR_BASE, gps->date.month, gps->date.day,
                  gps->tim.hour + TIME_ZONE, gps->tim.minute, gps->tim.second,
                  gps->latitude, gps->longitude, gps->altitude, gps->speed);
@@ -81,7 +82,7 @@ void tm1637_task(void *arg)
     if (led == NULL)
         vTaskDelete(NULL);
 
-    #if 0
+#if 0
         tm1637_set_brightness(led, 7);
         while (true)
         {
@@ -93,7 +94,7 @@ void tm1637_task(void *arg)
             tm1637_set_segment_fixed(led, led->segment_idx[5], 0xFF);
             vTaskDelay(s_wait_time);
         }
-    #endif
+#endif
 
     while (true)
     {
@@ -163,14 +164,14 @@ void tm1637_task(void *arg)
 
         // Test display text
         ESP_LOGI(TAG, "Test display text");
-		tm1637_set_segment_ascii(led, "PLAY");
-		vTaskDelay(s_wait_time);
-		tm1637_set_segment_ascii(led, "1234567890");
-		vTaskDelay(s_wait_time);
-		tm1637_set_segment_ascii(led, "IP 192.168.10.20");
-		vTaskDelay(s_wait_time);
-		tm1637_set_segment_ascii(led, "STOP");
-		vTaskDelay(s_wait_time);
+        tm1637_set_segment_ascii(led, "PLAY");
+        vTaskDelay(s_wait_time);
+        tm1637_set_segment_ascii(led, "1234567890");
+        vTaskDelay(s_wait_time);
+        tm1637_set_segment_ascii(led, "IP 192.168.10.20");
+        vTaskDelay(s_wait_time);
+        tm1637_set_segment_ascii(led, "STOP");
+        vTaskDelay(s_wait_time);
 
         // Test clock segment
         ESP_LOGI(TAG, "Test clock segment 1");
@@ -205,23 +206,22 @@ void led_task(void *arg)
 void app_main(void)
 {
 
-
     ESP_LOGI(TAG, "GPS LOG");
 
     xTaskCreate(&tm1637_task, "tm1637_task", 1024 * 4, NULL, 5, NULL);
     xTaskCreate(&led_task, "led_task", 1024 * 2, NULL, 5, NULL);
 
-        /* NMEA parser configuration */
-        nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
-        /* init NMEA parser library */
-        nmea_parser_handle_t nmea_hdl = nmea_parser_init(&config);
-        /* register event handler for NMEA parser library */
-        nmea_parser_add_handler(nmea_hdl, gps_event_handler, NULL);
-    
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-    
-        /* unregister event handler */
-        nmea_parser_remove_handler(nmea_hdl, gps_event_handler);
-        /* deinit NMEA parser library */
-        nmea_parser_deinit(nmea_hdl);
+    /* NMEA parser configuration */
+    nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
+    /* init NMEA parser library */
+    nmea_parser_handle_t nmea_hdl = nmea_parser_init(&config);
+    /* register event handler for NMEA parser library */
+    nmea_parser_add_handler(nmea_hdl, gps_event_handler, NULL);
+
+    // vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+    /* unregister event handler */
+    // nmea_parser_remove_handler(nmea_hdl, gps_event_handler);
+    /* deinit NMEA parser library */
+    // nmea_parser_deinit(nmea_hdl);
 }
