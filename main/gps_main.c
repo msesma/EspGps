@@ -1,10 +1,14 @@
-/* Blink Example
+/* ESP Gps
 
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
+   Receive NMEA signals from a GPS and show speed in a display
 
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
+   Future development:
+        Add road radar database and monitor distance to radars
+        Signal radar presence.
+        Show average speed for section radars
+        Add a buzzer to signal when speed is over the limit
+        Add a RGB led to signal states
+        Add a way to update the radar database
 */
 #include <stdio.h>
 #include <stdbool.h>
@@ -102,12 +106,12 @@ void led_task(void *arg)
         {
             gpio_set_level(BLINK_GPIO, s_led_state);
             s_led_state = !s_led_state;
-            vTaskDelay(s_led_period / portTICK_PERIOD_MS);
         }
         else
         {
             gpio_set_level(BLINK_GPIO, 1);
         }
+        vTaskDelay(s_led_period / portTICK_PERIOD_MS);
     }
 }
 
