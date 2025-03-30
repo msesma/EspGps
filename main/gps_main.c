@@ -22,6 +22,7 @@
 #include "tm1637.h"
 #include <time.h>
 #include <sys/time.h>
+#include <math.h>
 
 static const char *TAG = "EspGps";
 
@@ -66,7 +67,7 @@ static void gps_event_handler(void *event_handler_arg, esp_event_base_t event_ba
                  gps->latitude, gps->longitude, gps->altitude, gps->speed);
 
         // taskENTER_CRITICAL();
-        uint16_t speed_kmh_calc = gps->speed * 3.6; // convert m/s to km/h
+        uint16_t speed_kmh_calc = round(gps->speed * 3.6); // convert m/s to km/h
         speed_kmh = speed_kmh_calc;
         fix_state = gps->fix_mode;
         // taskEXIT_CRITICAL();
@@ -91,7 +92,7 @@ void tm1637_task(void *arg)
 
     while (true)
     {
-        ESP_LOGI(TAG, "Display speed");
+        ESP_LOGI(TAG, "Display speed %i", speed_kmh);
         tm1637_set_number(led, speed_kmh, false, 0x00);
         vTaskDelay(s_wait_time);
     }
