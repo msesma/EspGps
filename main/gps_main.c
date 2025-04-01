@@ -64,7 +64,7 @@ static void gps_event_handler(void *event_handler_arg, esp_event_base_t event_ba
                  gps->latitude, gps->longitude, gps->altitude, gps->speed);
 
         uint16_t speed_kmh_calc = round(gps->speed * 3.6); // convert m/s to km/h
-        show_speed(round(gps->speed));
+        show_speed(round(speed_kmh_calc));
         fix_state = gps->fix_mode;
         break;
     case GPS_UNKNOWN:
