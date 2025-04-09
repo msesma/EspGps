@@ -26,13 +26,20 @@
 
 static const char *TAG = "EspGps";
 
-#define BLINK_GPIO 8
+#define LED_GPIO 8
+#define RGB_LED_GPIO 10
 #define TIME_ZONE (+1)   // Europe Time
 #define YEAR_BASE (2000) // date in GPS starts from 2000
 
 static uint8_t s_led_state = 0;
 static uint16_t s_led_period = 1000;
 static uint16_t s_led_period_fast = 250;
+
+static uint8_t s_led_red = 0;
+static uint8_t s_led_green = 5;
+static uint8_t s_led_blue = 0;
+static led_strip_handle_t led_strip;
+
 const gpio_num_t LED_CLK = CONFIG_TM1637_CLK_PIN;
 const gpio_num_t LED_DTA = CONFIG_TM1637_DIO_PIN;
 tm1637_led_t *led = NULL;
@@ -77,25 +84,73 @@ static void gps_event_handler(void *event_handler_arg, esp_event_base_t event_ba
     }
 }
 
+static void blink_rgb_led(void)
+{
+    /* If the addressable LED is enabled */
+    if (!s_led_state)
+    {
+        /* Set the LED pixel using RGB from 0 (0%) to 255 (100%) for each color */
+        led_strip_set_pixel(led_strip, 0, s_led_red, s_led_green, s_led_blue);
+        /* Refresh the strip to send data */
+        led_strip_refresh(led_strip);
+    }
+    else
+    {
+        /* Set all LED off to clear all pixels */
+        led_strip_clear(led_strip);
+    }
+}
+
+static void configure_rgb_led(void)
+{
+    ESP_LOGI(TAG, "Example configured to blink addressable LED!");
+    /* LED strip initialization with the GPIO and pixels number*/
+    led_strip_config_t strip_config = {
+        .strip_gpio_num = RGB_LED_GPIO,
+        .max_leds = 1, // at least one LED on board
+    };
+#if CONFIG_BLINK_LED_STRIP_BACKEND_RMT
+    led_strip_rmt_config_t rmt_config = {
+        .resolution_hz = 10 * 1000 * 1000, // 10MHz
+        .flags.with_dma = false,
+    };
+    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip));
+#elif CONFIG_BLINK_LED_STRIP_BACKEND_SPI
+    led_strip_spi_config_t spi_config = {
+        .spi_bus = SPI2_HOST,
+        .flags.with_dma = true,
+    };
+    ESP_ERROR_CHECK(led_strip_new_spi_device(&strip_config, &spi_config, &led_strip));
+#else
+#error "unsupported LED strip backend"
+#endif
+    /* Set all LED off to clear all pixels */
+    led_strip_clear(led_strip);
+}
+
 void led_task(void *arg)
 {
-    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
     while (true)
     {
         switch (fix_state)
         {
         case GPS_MODE_INVALID:
-            gpio_set_level(BLINK_GPIO, s_led_state);
+            gpio_set_level(LED_GPIO, s_led_state);
+            blink_rgb_led();
             s_led_state = !s_led_state;
             vTaskDelay(s_led_period / portTICK_PERIOD_MS);
             break;
         case GPS_MODE_2D:
-            gpio_set_level(BLINK_GPIO, 1);
+            gpio_set_level(LED_GPIO, 1);
+            blink_rgb_led();
             s_led_state = !s_led_state;
             vTaskDelay(s_led_period_fast / portTICK_PERIOD_MS);
             break;
         case GPS_MODE_3D:
-            gpio_set_level(BLINK_GPIO, 0);
+            s_led_state = 0;
+            gpio_set_level(LED_GPIO, s_led_state);
+            blink_rgb_led();
             vTaskDelay(s_led_period / portTICK_PERIOD_MS);
             break;
         default:
@@ -108,6 +163,9 @@ void app_main(void)
 {
 
     ESP_LOGI(TAG, "GPS LOG");
+
+    /* RGB Led init */
+    configure_rgb_led();
 
     /* Display init */
     led = tm1637_init(LED_CLK, LED_DTA);
