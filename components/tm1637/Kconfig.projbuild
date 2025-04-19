@@ -15,7 +15,7 @@ menu "TM1637 Configuration"
 		default 22 if IDF_TARGET_ESP32
 		default 12 if IDF_TARGET_ESP32S2
 		default 12 if IDF_TARGET_ESP32S3
-		default  6 # C3 and others
+		default  1 # C3 and others
 		help
 			GPIO number (IOxx) for CLK pin of TM1637 display.
 			Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used.
@@ -27,7 +27,7 @@ menu "TM1637 Configuration"
 		default 21 if IDF_TARGET_ESP32
 		default 11 if IDF_TARGET_ESP32S2
 		default 11 if IDF_TARGET_ESP32S3
-		default  5 # C3 and others
+		default  0 # C3 and others
 		help
 			GPIO number (IOxx) for DIO pin of TM1637 display.
 			Some GPIOs are used for other purposes (flash connections, etc.) and cannot be used.
